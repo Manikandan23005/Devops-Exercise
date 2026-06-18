@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-config
+  namespace: production
+  labels:
+    app: payment-service
+    team: payments
+    managed-by: argocd
+data:
+  db_host: "postgres.production.svc.cluster.local"  # Internal DB service DNS
+  db_port: "5432"
+  db_name: "payments_prod"
+  app_port: "8080"
+  log_level: "info"
+  max_connections: "50"

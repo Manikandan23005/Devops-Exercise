@@ -1,0 +1,129 @@
+# =============================================================================
+# LIVE / DRIFTED STATE – What actually exists on the cluster during the incident.
+#
+# This file is for documentation and learning only — it is NOT applied to the cluster.
+#
+# THE ONLY DIFFERENCE vs gitops/manifests/payment-service/deployment.yaml:
+#
+#   spec.replicas: 0   ← on-call engineer manually ran:
+#                           kubectl scale deployment payment-service --replicas=0
+#                         at 03:05 UTC to stop OOMKilled pods, and forgot to scale back.
+#
+# Git wants replicas: 5
+# Cluster has replicas: 0
+# → ArgoCD detects the mismatch → reports OutOfSync + Degraded
+#
+# Run this to see the live diff:
+#   argocd app diff payment-service
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: production
+  labels:
+    app: payment-service
+    version: v2.4.1
+    team: payments
+    managed-by: argocd
+spec:
+  replicas: 0                        # ← DRIFT: manually scaled to 0 by on-call engineer
+                                     #   Git still says replicas: 5
+
+  selector:
+    matchLabels:
+      app: payment-service
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  progressDeadlineSeconds: 300
+
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        version: v2.4.1
+    spec:
+      serviceAccountName: payment-sa
+
+      containers:
+        - name: payment-service
+          image: myrepo.azurecr.io/payment-service:v2.4.1   # ← same as Git, no drift here
+
+          ports:
+            - containerPort: 8080
+              name: http
+
+          env:
+            - name: APP_ENV
+              value: production
+
+            - name: LOG_LEVEL
+              value: info
+
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: db_host
+
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: db_port
+
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-config
+                  key: db_name
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: payment-db-secret
+                  key: password
+
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+
+      terminationGracePeriodSeconds: 30
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: payment-service
