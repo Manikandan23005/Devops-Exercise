@@ -1,0 +1,30 @@
+# Terragrunt cache
+.terragrunt-cache/
+
+# Terraform directories and state
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Terraform lock file (optional: remove this line to keep it)
+.terraform.lock.hcl
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Provider binaries
+terraform-provider-*
+
+# OS files
+.DS_Store
+Thumbs.db
