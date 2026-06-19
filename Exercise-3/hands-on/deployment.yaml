@@ -1,7 +1,3 @@
-# =============================================================================
-# HANDS-ON DEPLOYMENT — uses nginx (public image, no secrets needed)
-# This is the DESIRED STATE stored in Git → replicas: 5
-# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,12 +7,10 @@ metadata:
     app: payment-service
     managed-by: argocd
 spec:
-  replicas: 5                        # Git desired state → 5 replicas
-
+  replicas: 5
   selector:
     matchLabels:
       app: payment-service
-
   template:
     metadata:
       labels:
@@ -24,11 +18,9 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: nginx:1.25           # Public image — no registry auth needed
-
+          image: nginx:1.25
           ports:
             - containerPort: 80
-
           resources:
             requests:
               cpu: "50m"
@@ -36,7 +28,6 @@ spec:
             limits:
               cpu: "100m"
               memory: "128Mi"
-
           readinessProbe:
             httpGet:
               path: /

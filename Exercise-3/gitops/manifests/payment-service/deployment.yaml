@@ -1,8 +1,3 @@
-# =============================================================================
-# DESIRED STATE – What Git says the cluster should look like.
-# replicas: 5  ←  this is the single source of truth.
-# Compare with broken-state/deployment-live.yaml (replicas: 0) to see the drift.
-# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,20 +9,16 @@ metadata:
     team: payments
     managed-by: argocd
 spec:
-  replicas: 5                        # ← DESIRED: 5 replicas (source of truth in Git)
-
+  replicas: 5
   selector:
     matchLabels:
       app: payment-service
-
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 0              # Zero-downtime rolling update
-
+      maxUnavailable: 0
   progressDeadlineSeconds: 300
-
   template:
     metadata:
       labels:
@@ -35,46 +26,37 @@ spec:
         version: v2.4.1
     spec:
       serviceAccountName: payment-sa
-
       containers:
         - name: payment-service
           image: myrepo.azurecr.io/payment-service:v2.4.1
-
           ports:
             - containerPort: 8080
               name: http
-
           env:
             - name: APP_ENV
               value: production
-
             - name: LOG_LEVEL
               value: info
-
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
                   name: payment-config
                   key: db_host
-
             - name: DB_PORT
               valueFrom:
                 configMapKeyRef:
                   name: payment-config
                   key: db_port
-
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
                   name: payment-config
                   key: db_name
-
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: payment-db-secret
                   key: password
-
           resources:
             requests:
               cpu: "200m"
@@ -82,7 +64,6 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
-
           readinessProbe:
             httpGet:
               path: /healthz/ready
@@ -90,7 +71,6 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 3
-
           livenessProbe:
             httpGet:
               path: /healthz/live
@@ -98,14 +78,11 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
             failureThreshold: 3
-
           lifecycle:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "sleep 5"]
-
       terminationGracePeriodSeconds: 30
-
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
