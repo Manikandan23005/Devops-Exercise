@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: payment-service
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Manikandan23005/Devops-Exercise
+    targetRevision: main
+    path: Exercise-3/hands-on
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
