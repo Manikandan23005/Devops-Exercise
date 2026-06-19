@@ -1,0 +1,9 @@
+{
+  "environment": "production",
+  "db_host": "db.production.internal",
+  "db_port": 5432,
+  "features": {
+    "s3_backup_enabled": true,
+    "monitoring": true
+  }
+}
