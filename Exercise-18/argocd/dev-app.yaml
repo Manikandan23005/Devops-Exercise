@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: python-app-dev
+  namespace: argocd
+  labels:
+    environment: dev
+    app: python-app
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Manikandan23005/Devops-Exercise.git
+    targetRevision: main
+    path: Exercise-18/helm-chart
+    helm:
+      valueFiles:
+        - ../gitops/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
