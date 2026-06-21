@@ -12,6 +12,9 @@ on:
     paths:
       - 'Exercise-23/**'
 
+permissions:
+  contents: write
+
 jobs:
   test-and-scan:
     name: Test & Security Scan
@@ -102,6 +105,6 @@ jobs:
           git add k8s/deployment.yaml
           git commit -m "gitops: update flask-app image tag to ${GITHUB_SHA::7}"
           
-          # Push to the repository using GITOPS_TOKEN
-          git remote set-url origin https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/${{ github.repository }}.git
+          # Push to the repository using the built-in GITHUB_TOKEN
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push origin main
