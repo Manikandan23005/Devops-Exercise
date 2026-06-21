@@ -87,6 +87,9 @@ Apply the declarations to register the three pipelines within ArgoCD:
 kubectl apply -f Exercise-18/argocd/
 ```
 
+**Screenshot — AWS EKS Console Cluster Status**
+![AWS EKS Console](image copy 3.png)
+
 ### 3. Verify Syncing Status
 Watch ArgoCD automatically create the namespaces and deploy the pods:
 ```bash
@@ -103,6 +106,12 @@ Expected output:
 * `qa`: 2 pods
 * `prod`: 3 pods
 
+**Screenshot — ArgoCD Multi-Environment Applications Dashboard**
+![ArgoCD Dashboard](image.png)
+
+**Screenshot — Kubernetes Pods Status in Target Namespaces**
+![Kubernetes Namespace Workloads](image copy 2.png)
+
 ### 4. Query the Web Interfaces
 Run a Python request one-liner inside the container network to view the environment-specific visual HTML outputs:
 ```bash
@@ -115,6 +124,10 @@ kubectl exec -n qa deploy/python-app-qa-deployment -- python -c "import urllib.r
 # Prod environment
 kubectl exec -n prod deploy/python-app-prod-deployment -- python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8080').read().decode('utf-8'))"
 ```
+
+**Screenshot — ArgoCD Application Visual Resource Tree**
+![ArgoCD Application Resources](image copy.png)
+
 
 ---
 
