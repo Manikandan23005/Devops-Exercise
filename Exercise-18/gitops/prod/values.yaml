@@ -1,4 +1,9 @@
 replicaCount: 3
 
+image:
+  repository: 028987315631.dkr.ecr.us-east-1.amazonaws.com/devops-python-app
+  tag: v1
+  pullPolicy: IfNotPresent
+
 env:
   APP_ENV: prod
