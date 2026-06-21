@@ -117,4 +117,12 @@ docker build -f docker/Dockerfile -t test-app:local .
 
 # 4. Verify AWS IAM Identity
 aws sts get-caller-identity
+
+## 📊 Lab Completion Status
+
+- [ ] **Scenario 1:** Unit Test Failure
+- [ ] **Scenario 2:** Security Scan Failure
+- [ ] **Scenario 3:** Docker Build Failure
+- [ ] **Scenario 4:** AWS ECR Push Failure
+- [ ] **Scenario 5:** GitOps Repository Update Failure
 ```
