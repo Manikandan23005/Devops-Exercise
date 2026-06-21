@@ -1,0 +1,26 @@
+# DEV environment overrides for python-app
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+configData:
+  APP_ENV: "dev"
+  APP_MESSAGE: "Hello from the DEV Environment!"
+
+secretData:
+  API_KEY: "dev-secret-key-xyz"
+  DB_PASSWORD: "dev-db-password-123"
+
+# Disable autoscaling in Dev
+autoscaling:
+  enabled: false
+
+# Disable PodDisruptionBudget in Dev
+pdb:
+  enabled: false

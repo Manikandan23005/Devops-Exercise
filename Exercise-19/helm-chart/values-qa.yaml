@@ -1,0 +1,30 @@
+# QA environment overrides for python-app
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+configData:
+  APP_ENV: "qa"
+  APP_MESSAGE: "Hello from the QA Environment - Ready for Testing!"
+
+secretData:
+  API_KEY: "qa-secret-key-abc"
+  DB_PASSWORD: "qa-db-password-456"
+
+# Enable scaling in QA
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+# PodDisruptionBudget configurations for QA
+pdb:
+  enabled: true
+  minAvailable: 1

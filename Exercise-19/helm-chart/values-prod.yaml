@@ -1,0 +1,30 @@
+# PROD environment overrides for python-app
+replicaCount: 3
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+
+configData:
+  APP_ENV: "prod"
+  APP_MESSAGE: "Welcome to the Production Environment - High Availability!"
+
+secretData:
+  API_KEY: "prod-secret-key-prodonly"
+  DB_PASSWORD: "prod-db-password-supersecure"
+
+# Enable scaling in PROD
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+
+# PodDisruptionBudget configurations for PROD
+pdb:
+  enabled: true
+  minAvailable: 2
