@@ -124,5 +124,5 @@ aws sts get-caller-identity
 - [ ] **Scenario 2:** Security Scan Failure
 - [ ] **Scenario 3:** Docker Build Failure
 - [ ] **Scenario 4:** AWS ECR Push Failure
-- [ ] **Scenario 5:** GitOps Repository Update Failure.
+- [ ] **Scenario 5:** GitOps Repository Update Failure..
 ```
