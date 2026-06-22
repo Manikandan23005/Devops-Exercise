@@ -95,8 +95,13 @@ Then, inspect the logs of the running pod:
 ```bash
 kubectl logs -n customer-app deployment/customer-api
 ```
+
+![Pod status and healthy logs showing successful DynamoDB reads](image%20copy.png)
+
 **Observation**: You find `AccessDeniedException` logs. The API request caller is identified as: `User: arn:aws:sts::123456789012:assumed-role/eks-nodegroup-role`.
 This is a critical clue: the pod is using the host node's IAM role instead of the specific IRSA role.
+
+![AccessDeniedException errors in pod logs — eks-nodegroup-role used instead of IRSA role](image%20copy%202.png)
 
 ---
 
@@ -110,6 +115,8 @@ kubectl get deployment customer-api -n customer-app -o yaml | grep serviceAccoun
 serviceAccountName: customer-sa
 ```
 If the deployment uses `default` or another ServiceAccount, it will not fetch the intended role.
+
+![Deployment YAML showing serviceAccountName and the EKS webhook injection script](image.png)
 
 ---
 
@@ -135,6 +142,8 @@ kubectl exec -it deployment/customer-api -n customer-app -- env | grep AWS
 **Observation**:
 You will see that `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE` are **missing**.
 When IRSA is fully active, the EKS Pod Identity Webhook automatically injects these variables and mounts the token volume. Their absence confirms that the webhook did not process the pod because the ServiceAccount annotation was missing.
+
+![After fix: AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE injected; ServiceAccount annotation confirmed](image%20copy%203.png)
 
 ---
 
@@ -164,6 +173,8 @@ Since Kubernetes pods do not dynamically load environment changes from ServiceAc
 kubectl rollout restart deployment customer-api -n customer-app
 ```
 
+![Annotating the ServiceAccount and rolling out the deployment restart](image%20copy%204.png)
+
 ### 3. Verify the Resolution
 Check the ServiceAccount:
 ```bash
@@ -181,6 +192,8 @@ Check the pod logs:
 kubectl logs -n customer-app -f deployment/customer-api
 ```
 Ensure the DynamoDB item retrieve requests are succeeding without authorization failures.
+
+![ServiceAccount annotation verified and DynamoDB reads succeeding after fix](image%20copy%205.png)
 
 ---
 
