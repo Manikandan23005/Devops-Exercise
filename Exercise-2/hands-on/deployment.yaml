@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-api
+  namespace: customer-app
+  labels:
+    app: customer-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-api
+  template:
+    metadata:
+      labels:
+        app: customer-api
+    spec:
+      serviceAccountName: customer-sa
+      containers:
+        - name: aws-cli
+          image: amazon/aws-cli:latest
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              # Set up env wrapper to simulate EKS Webhook injection when annotation is present
+              if [ ! -f /usr/bin/env.real ]; then
+                mv /usr/bin/env /usr/bin/env.real
+                echo '#!/bin/sh' > /usr/bin/env
+                echo 'if [ -f /etc/aws-env ]; then' >> /usr/bin/env
+                echo '  . /etc/aws-env' >> /usr/bin/env
+                echo 'fi' >> /usr/bin/env
+                echo 'exec /usr/bin/env.real "$@"' >> /usr/bin/env
+                chmod +x /usr/bin/env
+              fi
+
+              # Get Kubernetes ServiceAccount details from API
+              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              APISERVER=https://kubernetes.default.svc
+
+              SA_JSON=$(curl -s --cacert "$CACERT" -H "Authorization: Bearer $TOKEN" "$APISERVER/api/v1/namespaces/customer-app/serviceaccounts/customer-sa")
+
+              if echo "$SA_JSON" | grep -q 'eks.amazonaws.com/role-arn'; then
+                # Healthy/Fixed State: annotation found
+                ROLE_ARN=$(echo "$SA_JSON" | grep -o '"eks.amazonaws.com/role-arn": *"[^"]*"' | cut -d'"' -f4)
+                echo "export AWS_ROLE_ARN=$ROLE_ARN" > /etc/aws-env
+                echo "export AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token" >> /etc/aws-env
+                
+                while true
+                do
+                  echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') INFO - Connection established. Retrieving item..."
+                  echo "Item retrieved successfully: {\"id\": {\"S\": \"1\"}, \"name\": {\"S\": \"Acme Corp\"}, \"status\": {\"S\": \"Active\"}}"
+                  sleep 15
+                done
+              else
+                # Broken State: annotation missing
+                rm -f /etc/aws-env
+                while true
+                do
+                  echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') ERROR"
+                  echo ""
+                  echo "botocore.exceptions.ClientError:"
+                  echo ""
+                  echo "An error occurred (AccessDeniedException)"
+                  echo "when calling the GetItem operation:"
+                  echo ""
+                  echo "User:"
+                  echo "arn:aws:sts::123456789012:assumed-role/eks-nodegroup-role"
+                  echo ""
+                  echo "is not authorized to perform: "
+                  echo "dynamodb:GetItem"
+                  echo ""
+                  echo "on resource: "
+                  echo "arn:aws:dynamodb:ap-south-1:123456789012:table/customer-data"
+                  sleep 15
+                done
+              fi
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
