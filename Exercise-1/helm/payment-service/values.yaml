@@ -1,0 +1,60 @@
+replicaCount: 2
+
+image:
+  repository: 028987315631.dkr.ecr.ap-south-1.amazonaws.com/payment-service
+  tag: v1
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: payment-service-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::028987315631:role/payment-service-irsa-role
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /
+  hosts:
+    - host: payment.company.internal
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+env:
+  AWS_REGION: ap-south-1
+  SECRET_NAME: payment-service-secret
+
+externalSecret:
+  enabled: true
+  secretStoreName: aws-secret-store
+  secretName: payment-secret
+  remoteSecretName: payment-service-secret
+
+monitoring:
+  enabled: true
+  port: 5000
+  path: /metrics
+
+namespace: payment

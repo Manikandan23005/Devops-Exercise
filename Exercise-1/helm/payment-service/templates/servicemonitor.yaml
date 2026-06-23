@@ -1,0 +1,21 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "payment-service.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ include "payment-service.name" . }}
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "payment-service.name" . }}
+  endpoints:
+    - port: http
+      path: {{ .Values.monitoring.path }}
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+{{- end }}
