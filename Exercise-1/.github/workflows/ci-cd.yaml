@@ -8,6 +8,7 @@ on:
       - "Exercise-1/app/**"
       - "Exercise-1/helm/**"
       - "Exercise-1/.github/workflows/**"
+      - ".github/workflows/**"
 
 env:
   AWS_REGION: ap-south-1
