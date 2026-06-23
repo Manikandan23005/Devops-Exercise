@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Flask App ────────────────────────────────────────────────────────────────
 
-# Flask application instance
+# Flask application instance (updated trigger)
 app = Flask(__name__)
 
 # ─── Prometheus Metrics ───────────────────────────────────────────────────────
