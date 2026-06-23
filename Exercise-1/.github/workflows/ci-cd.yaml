@@ -37,7 +37,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd Exercise-1/app
-          pytest tests/ -v
+          python -m pytest tests/ -v
 
   # ─── Job 2: Build, Push & Deploy ────────────────────────────────────────────
   build-push-deploy:
