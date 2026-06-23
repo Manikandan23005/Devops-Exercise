@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: 028987315631.dkr.ecr.ap-south-1.amazonaws.com/payment-service
-  tag: v1
+  tag: 6709cf330c88a653426b2b65e330add0bd42b3cf
   pullPolicy: IfNotPresent
 
 nameOverride: ""
