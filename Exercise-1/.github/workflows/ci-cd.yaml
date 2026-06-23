@@ -30,12 +30,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r app/requirements.txt
+          pip install -r Exercise-1/app/requirements.txt
           pip install pytest
 
       - name: Run unit tests
         run: |
-          cd app
+          cd Exercise-1/app
           pytest tests/ -v
 
   # ─── Job 2: Build, Push & Deploy ────────────────────────────────────────────
