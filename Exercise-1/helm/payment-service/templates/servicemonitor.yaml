@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ include "payment-service.name" . }}
-    release: prometheus
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
