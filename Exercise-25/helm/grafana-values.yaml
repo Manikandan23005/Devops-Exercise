@@ -1,0 +1,66 @@
+# Helm values for Grafana
+# Reference: https://github.com/grafana/helm-charts/tree/main/charts/grafana
+
+adminPassword: admin
+
+# Automatically configure data sources in Grafana
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus-server.observability.svc.cluster.local
+      isDefault: true
+      jsonData:
+        httpMethod: POST
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki.observability.svc.cluster.local:3100
+      jsonData:
+        maxLines: 1000
+    - name: Tempo
+      type: tempo
+      access: proxy
+      url: http://tempo.observability.svc.cluster.local:3100
+      jsonData:
+        httpMethod: GET
+        # Integrates Loki search directly into Tempo traces UI
+        lokiSearch:
+          datasourceUid: Loki
+        tracesToLogs:
+          datasourceUid: Loki
+          tags: ['pod', 'namespace', 'container']
+          filterByTraceID: true
+
+# Enable sidecar to dynamically load dashboards from configmaps
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    searchNamespace: ALL
+
+# Pre-provision Dashboard providers
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+        path: /var/lib/grafana/dashboards/default
+
+# Mount provisioned dashboard JSON files
+dashboardsConfigMaps:
+  default:
+    cpu-dashboard: cpu-dashboard
+    memory-dashboard: memory-dashboard
+    error-rate-dashboard: error-rate-dashboard
+    request-rate-dashboard: request-rate-dashboard

@@ -1,0 +1,36 @@
+# Helm values for aws-load-balancer-controller
+# Reference: https://github.com/aws/eks-charts/tree/master/stable/aws-load-balancer-controller
+
+# EKS Cluster Name
+clusterName: production-eks
+
+# AWS Region
+region: ap-south-1
+
+# Target VPC ID where the EKS Cluster is running
+vpcId: vpc-09c126c4b9ddf5d39
+
+# ServiceAccount configurations for IRSA integration
+serviceAccount:
+  create: true
+  name: aws-load-balancer-controller
+  annotations:
+    # Set IAM Role ARN created by Terraform
+    eks.amazonaws.com/role-arn: arn:aws:iam::028987315631:role/aws-load-balancer-controller-role
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Replicas (Production HA recommends 2)
+replicaCount: 2
+
+# Extra arguments
+extraArgs:
+  # Tag target groups and load balancers
+  - --aws-max-retries=10

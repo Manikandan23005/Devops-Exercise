@@ -1,0 +1,66 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apps-ingress
+  namespace: exercise21
+  annotations:
+    # Use the AWS Load Balancer Controller
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/ingress.class: alb
+    
+    # Expose the ALB to the internet
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    
+    # Route traffic directly to Pod IPs (recommended for EKS VPC CNI)
+    alb.ingress.kubernetes.io/target-type: ip
+    
+    # Open HTTP (80) and HTTPS (443) ports
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    
+    # Configure SSL Certificate from AWS Certificate Manager (ACM)
+    # REPLACE WITH YOUR ACTUAL CERTIFICATE ARN
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:028987315631:certificate/placeholder-arn-replace-me
+    
+    # Enable automatic HTTP to HTTPS redirection
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    
+    # Health check settings for AWS Target Groups
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+    
+    # Custom Security Group if needed (optional)
+    # alb.ingress.kubernetes.io/security-groups: sg-xxxxxxxxxxxxxxxxx
+    
+    # Group multiple ingresses under a single ALB
+    alb.ingress.kubernetes.io/group.name: devops-exercise-ingress-group
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-service
+            port:
+              number: 80
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: dashboard-service
+            port:
+              number: 80

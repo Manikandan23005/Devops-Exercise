@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: exercise21
+  labels:
+    app: api-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: api-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-service
+  namespace: exercise21
+  labels:
+    app: admin-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: admin-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: exercise21
+  labels:
+    app: dashboard-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: dashboard-service

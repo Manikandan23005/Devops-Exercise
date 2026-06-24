@@ -1,0 +1,34 @@
+# Helm values for cluster-autoscaler
+# Reference: https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler
+
+autoDiscovery:
+  clusterName: production-eks
+
+awsRegion: ap-south-1
+
+rbac:
+  create: true
+  serviceAccount:
+    create: true
+    name: cluster-autoscaler
+    annotations:
+      # Annotate ServiceAccount with the IAM Role ARN created by Terraform
+      eks.amazonaws.com/role-arn: arn:aws:iam::028987315631:role/eks-cluster-autoscaler-role
+
+# Extra arguments for cluster autoscaler
+extraArgs:
+  balance-similar-node-groups: true
+  skip-nodes-with-system-pods: false
+  skip-nodes-with-local-storage: false
+  expander: least-waste
+  v: 4
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 600Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi

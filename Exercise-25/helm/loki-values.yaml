@@ -1,0 +1,52 @@
+# Helm values for Loki (Single Binary Mode)
+# Reference: https://github.com/grafana/helm-charts/tree/main/charts/loki
+
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  
+  commonConfig:
+    replication_factor: 1
+  
+  # Configure storage schema
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        index:
+          period: 24h
+          prefix: loki_index_
+        object_store: filesystem
+        schema: v13
+        store: tsdb
+
+  # Storage configuration details
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+
+# Configure Persistent Volume Claim (PVC) using standard ebs gp2 storageclass
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+
+# Enable monitoring endpoints
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      install: false
+
+# Production Configuration Example using AWS S3 (Uncomment in production)
+# loki:
+#   storage:
+#     type: s3
+#     s3:
+#       s3: s3://ap-south-1/my-loki-bucket
+#       region: ap-south-1
+#       # Credentials can be resolved via IRSA (role annotation on Loki ServiceAccount)

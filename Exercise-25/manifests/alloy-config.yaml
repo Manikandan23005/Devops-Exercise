@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: observability
+data:
+  config.alloy: |
+    // ----------------------------------------------------
+    // METRICS CONFIGURATION (Prometheus Remote Write)
+    // ----------------------------------------------------
+    prometheus.remote_write "local" {
+      endpoint {
+        url = "http://prometheus-server.monitoring.svc.cluster.local/api/v1/write"
+      }
+    }
+
+    // Scrape Alloy's own metrics
+    prometheus.scrape "alloy" {
+      targets = [{"__address__" = "localhost:12345"}]
+      forward_to = [prometheus.remote_write.local.receiver]
+    }
+
+    // ----------------------------------------------------
+    // LOGS CONFIGURATION (Loki Write)
+    // ----------------------------------------------------
+    loki.write "local" {
+      endpoint {
+        url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+      }
+    }
+
+    // Discovery target for Kubernetes Pod logs
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    // Tailing files from pod log directories
+    local.file_match "pod_logs" {
+      path_targets = discovery.kubernetes.pods.targets
+    }
+
+    loki.source.file "pod_logs" {
+      targets    = local.file_match.pod_logs.targets
+      forward_to = [loki.write.local.receiver]
+    }
+
+    // ----------------------------------------------------
+    // TRACES CONFIGURATION (Tempo OTLP Receiver)
+    // ----------------------------------------------------
+    otelcol.receiver.otlp "default" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      http {
+        endpoint = "0.0.0.0:4318"
+      }
+      output {
+        metrics = [otelcol.exporter.prometheus.local.input]
+        logs    = [otelcol.exporter.loki.local.input]
+        traces  = [otelcol.exporter.otlp.tempo.input]
+      }
+    }
+
+    // Export OTel metrics to Prometheus format
+    otelcol.exporter.prometheus "local" {
+      forward_to = [prometheus.remote_write.local.receiver]
+    }
+
+    // Export OTel logs to Loki format
+    otelcol.exporter.loki "local" {
+      forward_to = [loki.write.local.receiver]
+    }
+
+    // Export OTel traces to Tempo
+    otelcol.exporter.otlp "tempo" {
+      client {
+        endpoint = "tempo.observability.svc.cluster.local:4317"
+        tls {
+          insecure = true
+        }
+      }
+    }

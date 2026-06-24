@@ -1,0 +1,42 @@
+# Helm values for Tempo (Single Binary Mode)
+# Reference: https://github.com/grafana/helm-charts/tree/main/charts/tempo
+
+tempo:
+  repository: grafana/tempo
+  tag: 2.4.1
+  
+  # Configure active ingestion protocols
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    zipkin:
+      endpoint: 0.0.0.0:9411
+    jaeger:
+      protocols:
+        thrift_compact:
+          endpoint: 0.0.0.0:6831
+        thrift_binary:
+          endpoint: 0.0.0.0:6832
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+        grpc:
+          endpoint: 0.0.0.0:14250
+
+  # Storage configuration details
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+# Configure Persistent Volume Claim (PVC)
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: gp2

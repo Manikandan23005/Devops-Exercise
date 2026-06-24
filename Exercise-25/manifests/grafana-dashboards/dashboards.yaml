@@ -1,0 +1,143 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cpu-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  cpu-dashboard.json: |
+    {
+      "editable": true,
+      "id": null,
+      "panels": [
+        {
+          "id": 1,
+          "title": "Pod CPU Utilization Rate (5m average)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "Prometheus"},
+              "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\", namespace!=\"\"}[5m])) by (pod, namespace)",
+              "legendFormat": "{{namespace}} / {{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            }
+          }
+        }
+      ],
+      "title": "K8s Pod CPU Dashboard",
+      "schemaVersion": 38,
+      "version": 1
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  memory-dashboard.json: |
+    {
+      "editable": true,
+      "id": null,
+      "panels": [
+        {
+          "id": 1,
+          "title": "Pod Memory Usage (Working Set Bytes)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "Prometheus"},
+              "expr": "sum(container_memory_working_set_bytes{container!=\"\", namespace!=\"\"}) by (pod, namespace)",
+              "legendFormat": "{{namespace}} / {{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "decbytes"
+            }
+          }
+        }
+      ],
+      "title": "K8s Pod Memory Dashboard",
+      "schemaVersion": 38,
+      "version": 1
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: error-rate-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  error-rate-dashboard.json: |
+    {
+      "editable": true,
+      "id": null,
+      "panels": [
+        {
+          "id": 1,
+          "title": "Error Rate (HTTP 5xx responses/sec)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "Prometheus"},
+              "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service, namespace) OR sum(rate(nginx_ingress_controller_requests{status=~\"5..\"}[5m])) by (ingress, namespace)",
+              "legendFormat": "{{namespace}} / {{service}}{{ingress}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "pps"
+            }
+          }
+        }
+      ],
+      "title": "K8s Service Error Rate Dashboard",
+      "schemaVersion": 38,
+      "version": 1
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: request-rate-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  request-rate-dashboard.json: |
+    {
+      "editable": true,
+      "id": null,
+      "panels": [
+        {
+          "id": 1,
+          "title": "Request Throughput (Requests/sec)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "Prometheus"},
+              "expr": "sum(rate(http_requests_total[5m])) by (service, namespace) OR sum(rate(nginx_ingress_controller_requests[5m])) by (ingress, namespace)",
+              "legendFormat": "{{namespace}} / {{service}}{{ingress}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "rps"
+            }
+          }
+        }
+      ],
+      "title": "K8s Service Request Rate Dashboard",
+      "schemaVersion": 38,
+      "version": 1
+    }

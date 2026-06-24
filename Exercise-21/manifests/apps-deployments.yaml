@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-html
+  namespace: exercise21
+data:
+  index.html: |
+    {"service": "api-service", "status": "running", "version": "1.0.0"}
+  healthz: |
+    OK
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: exercise21
+  labels:
+    app: api-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/api/index.html
+          subPath: index.html
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/healthz
+          subPath: healthz
+      volumes:
+      - name: html-volume
+        configMap:
+          name: api-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-html
+  namespace: exercise21
+data:
+  index.html: |
+    {"service": "admin-service", "status": "running", "version": "1.0.0"}
+  healthz: |
+    OK
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service
+  namespace: exercise21
+  labels:
+    app: admin-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-service
+  template:
+    metadata:
+      labels:
+        app: admin-service
+    spec:
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/admin/index.html
+          subPath: index.html
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/healthz
+          subPath: healthz
+      volumes:
+      - name: html-volume
+        configMap:
+          name: admin-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-html
+  namespace: exercise21
+data:
+  index.html: |
+    {"service": "dashboard-service", "status": "running", "version": "1.0.0"}
+  healthz: |
+    OK
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-service
+  namespace: exercise21
+  labels:
+    app: dashboard-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dashboard-service
+  template:
+    metadata:
+      labels:
+        app: dashboard-service
+    spec:
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/dashboard/index.html
+          subPath: index.html
+        - name: html-volume
+          mountPath: /usr/share/nginx/html/healthz
+          subPath: healthz
+      volumes:
+      - name: html-volume
+        configMap:
+          name: dashboard-html
