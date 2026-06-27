@@ -92,30 +92,30 @@ Perform a zero-downtime migration by deploying the new pods side-by-side, switch
 
 ```bash
 # 1. Deploy the new deployment under a new name (payment-service-v2)
-cat <<EOF | kubectl apply -n exercise-5 -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: payment-service-v2
-  labels:
-    app: payment-v2
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  cat <<EOF | kubectl apply -n exercise-5 -f -
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: payment-service-v2
+    labels:
       app: payment-v2
-  template:
-    metadata:
-      labels:
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
         app: payment-v2
-    spec:
-      containers:
-        - name: payment-service
-          image: nginx:alpine
-          ports:
-            - name: http
-              containerPort: 80
-EOF
+    template:
+      metadata:
+        labels:
+          app: payment-v2
+      spec:
+        containers:
+          - name: payment-service
+            image: nginx:alpine
+            ports:
+              - name: http
+                containerPort: 80
+  EOF
 
 # 2. Wait for the new pods to be ready
 kubectl rollout status deployment/payment-service-v2 -n exercise-5
