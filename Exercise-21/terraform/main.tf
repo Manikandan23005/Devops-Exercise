@@ -24,17 +24,14 @@ variable "eks_cluster_name" {
   default     = "production-eks"
 }
 
-# Fetch the existing EKS Cluster details
 data "aws_eks_cluster" "eks" {
   name = var.eks_cluster_name
 }
 
-# Fetch OIDC provider using EKS cluster issuer url
 data "aws_iam_openid_connect_provider" "eks_oidc" {
   url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
 }
 
-# IAM Policy for AWS Load Balancer Controller (required actions)
 resource "aws_iam_policy" "aws_load_balancer_controller" {
   name        = "AWSLoadBalancerControllerIAMPolicy"
   description = "IAM Policy for EKS AWS Load Balancer Controller"
@@ -230,7 +227,6 @@ resource "aws_iam_policy" "aws_load_balancer_controller" {
   })
 }
 
-# IAM Role assumed by Service Account via Web Identity
 resource "aws_iam_role" "aws_load_balancer_controller" {
   name = "aws-load-balancer-controller-role"
 
@@ -254,7 +250,6 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
   })
 }
 
-# Attach Policy to Role
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
   policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
   role       = aws_iam_role.aws_load_balancer_controller.name

@@ -1,10 +1,8 @@
-# Terraform code to tag existing EKS Auto Scaling Groups (ASG) for Auto Discovery
-# Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag
 
 variable "asg_names" {
   type        = list(string)
   description = "List of Auto Scaling Group names to tag for Cluster Autoscaler"
-  default     = [] # Users can override this with their actual ASG names
+  default     = []
 }
 
 resource "aws_autoscaling_group_tag" "ca_enabled" {

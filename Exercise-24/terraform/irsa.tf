@@ -1,4 +1,3 @@
-# Terraform IRSA Setup for Exercise 24
 
 terraform {
   required_version = ">= 1.0"
@@ -24,17 +23,14 @@ variable "eks_cluster_name" {
   default = "production-eks"
 }
 
-# Fetch EKS details dynamically
 data "aws_eks_cluster" "eks" {
   name = var.eks_cluster_name
 }
 
-# Fetch OIDC provider using EKS cluster issuer url
 data "aws_iam_openid_connect_provider" "eks_oidc" {
   url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
 }
 
-# IAM Policy for DynamoDB Access
 resource "aws_iam_policy" "customer_dynamodb_policy" {
   name        = "Exercise24DynamoDBAccessPolicy"
   description = "IAM Policy allowing Flask App to read, write, and update customer table"
@@ -55,7 +51,6 @@ resource "aws_iam_policy" "customer_dynamodb_policy" {
   })
 }
 
-# IAM Role assumed by the EKS ServiceAccount 'customer-sa' in namespace 'exercise24'
 resource "aws_iam_role" "customer_irsa_role" {
   name = "exercise24-customer-role"
 
@@ -79,7 +74,6 @@ resource "aws_iam_role" "customer_irsa_role" {
   })
 }
 
-# Attach IAM Policy to IAM Role
 resource "aws_iam_role_policy_attachment" "customer_dynamodb_attach" {
   policy_arn = aws_iam_policy.customer_dynamodb_policy.arn
   role       = aws_iam_role.customer_irsa_role.name

@@ -7,7 +7,6 @@ metadata:
   name: cluster-autoscaler
   namespace: kube-system
   annotations:
-    # ServiceAccount annotated with IRSA Role ARN
     eks.amazonaws.com/role-arn: arn:aws:iam::028987315631:role/eks-cluster-autoscaler-role
 ---
 apiVersion: rbac.authorization.k8s.io/v1

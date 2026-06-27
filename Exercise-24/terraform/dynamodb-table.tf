@@ -1,4 +1,3 @@
-# Terraform DynamoDB Table Configuration
 
 resource "aws_dynamodb_table" "customers" {
   name         = "exercise24-customers"

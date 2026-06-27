@@ -1,14 +1,11 @@
-
 replicaCount: 1
-
 image:
-  repository: devops-python-app
-  tag: v1
+  repository: nginx
+  tag: alpine
   pullPolicy: IfNotPresent
+
+selectorApp: payment
 
 service:
   type: ClusterIP
   port: 80
-
-env:
-  APP_ENV: dev

@@ -8,7 +8,6 @@ echo "============================================="
 echo "Creating DynamoDB Table: $TABLE_NAME"
 echo "============================================="
 
-# Create table
 aws dynamodb create-table \
   --table-name "$TABLE_NAME" \
   --attribute-definitions AttributeName=id,AttributeType=S \

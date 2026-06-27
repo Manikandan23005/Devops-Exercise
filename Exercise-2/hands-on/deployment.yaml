@@ -23,7 +23,6 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              # Set up env wrapper to simulate EKS Webhook injection when annotation is present
               if [ ! -f /usr/bin/env.real ]; then
                 mv /usr/bin/env /usr/bin/env.real
                 echo '#!/bin/sh' > /usr/bin/env
@@ -34,7 +33,6 @@ spec:
                 chmod +x /usr/bin/env
               fi
 
-              # Get Kubernetes ServiceAccount details from API
               TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
               CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
               APISERVER=https://kubernetes.default.svc
@@ -42,7 +40,6 @@ spec:
               SA_JSON=$(curl -s --cacert "$CACERT" -H "Authorization: Bearer $TOKEN" "$APISERVER/api/v1/namespaces/customer-app/serviceaccounts/customer-sa")
 
               if echo "$SA_JSON" | grep -q 'eks.amazonaws.com/role-arn'; then
-                # Healthy/Fixed State: annotation found
                 ROLE_ARN=$(echo "$SA_JSON" | grep -o '"eks.amazonaws.com/role-arn": *"[^"]*"' | cut -d'"' -f4)
                 echo "export AWS_ROLE_ARN=$ROLE_ARN" > /etc/aws-env
                 echo "export AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token" >> /etc/aws-env
@@ -54,7 +51,6 @@ spec:
                   sleep 15
                 done
               else
-                # Broken State: annotation missing
                 rm -f /etc/aws-env
                 while true
                 do

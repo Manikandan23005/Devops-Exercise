@@ -6,16 +6,12 @@ from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Fetch environment variables
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "exercise24-customers")
 AWS_REGION = os.environ.get("AWS_REGION", "ap-south-1")
 
-# Initialize DynamoDB Client using Default Credential Chain
-# (No keys passed; boto3 will look for token at AWS_WEB_IDENTITY_TOKEN_FILE)
 try:
     dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
     table = dynamodb.Table(TABLE_NAME)
@@ -37,7 +33,6 @@ def index():
         "region": AWS_REGION
     })
 
-# POST /customer - Create customer (PutItem)
 @app.route("/customer", methods=["POST"])
 def create_customer():
     if not table:
@@ -78,7 +73,6 @@ def create_customer():
         logger.error(f"Unexpected error in create_customer: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# GET /customer/<id> - Read customer (GetItem)
 @app.route("/customer/<id>", methods=["GET"])
 def get_customer(id):
     if not table:
@@ -99,7 +93,6 @@ def get_customer(id):
         logger.error(f"Unexpected error in get_customer: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# PUT /customer/<id> - Update customer (UpdateItem)
 @app.route("/customer/<id>", methods=["PUT"])
 def update_customer(id):
     if not table:
@@ -109,15 +102,12 @@ def update_customer(id):
     if not data:
         return jsonify({"error": "No update fields provided"}), 400
         
-    # Build dynamic UpdateExpression
     update_expression_parts = []
     expression_attribute_values = {}
     expression_attribute_names = {}
     
-    # We allow updating name, email, and phone
     for field in ["name", "email", "phone"]:
         if field in data:
-            # Avoid using reserved words in expression
             placeholder_name = f"#field_{field}"
             placeholder_val = f":val_{field}"
             update_expression_parts.append(f"{placeholder_name} = {placeholder_val}")

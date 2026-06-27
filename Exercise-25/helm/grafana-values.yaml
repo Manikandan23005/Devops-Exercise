@@ -1,9 +1,6 @@
-# Helm values for Grafana
-# Reference: https://github.com/grafana/helm-charts/tree/main/charts/grafana
 
 adminPassword: admin
 
-# Automatically configure data sources in Grafana
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -27,7 +24,6 @@ datasources:
       url: http://tempo.observability.svc.cluster.local:3100
       jsonData:
         httpMethod: GET
-        # Integrates Loki search directly into Tempo traces UI
         lokiSearch:
           datasourceUid: Loki
         tracesToLogs:
@@ -35,7 +31,6 @@ datasources:
           tags: ['pod', 'namespace', 'container']
           filterByTraceID: true
 
-# Enable sidecar to dynamically load dashboards from configmaps
 sidecar:
   dashboards:
     enabled: true
@@ -43,7 +38,6 @@ sidecar:
     labelValue: "1"
     searchNamespace: ALL
 
-# Pre-provision Dashboard providers
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
@@ -57,7 +51,6 @@ dashboardProviders:
       options:
         path: /var/lib/grafana/dashboards/default
 
-# Mount provisioned dashboard JSON files
 dashboardsConfigMaps:
   default:
     cpu-dashboard: cpu-dashboard

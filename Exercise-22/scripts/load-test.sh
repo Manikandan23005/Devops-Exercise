@@ -10,23 +10,19 @@ echo "============================================="
 echo "Starting Load Test Setup for Exercise 22"
 echo "============================================="
 
-# Verify if service is up
 echo "--> Checking if service $SERVICE_NAME is available..."
 kubectl get svc "$SERVICE_NAME" -n "$NAMESPACE"
 
-# Port forward in the background
 echo "--> Establishing Port-Forward on port $LOCAL_PORT..."
 kubectl port-forward svc/"$SERVICE_NAME" "$LOCAL_PORT":80 -n "$NAMESPACE" > /dev/null 2>&1 &
 PF_PID=$!
 
-# Ensure we clean up port forward on exit
 cleanup() {
   echo "--> Cleaning up port forward (PID: $PF_PID)..."
   kill "$PF_PID" || true
 }
 trap cleanup EXIT
 
-# Wait for port forward to be active
 sleep 3
 
 echo -e "\n=== OPTION 1: Using 'hey' (HTTP load generator) ==="

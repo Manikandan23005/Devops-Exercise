@@ -1,5 +1,3 @@
-# Helm values for cluster-autoscaler
-# Reference: https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler
 
 autoDiscovery:
   clusterName: production-eks
@@ -12,10 +10,8 @@ rbac:
     create: true
     name: cluster-autoscaler
     annotations:
-      # Annotate ServiceAccount with the IAM Role ARN created by Terraform
       eks.amazonaws.com/role-arn: arn:aws:iam::028987315631:role/eks-cluster-autoscaler-role
 
-# Extra arguments for cluster autoscaler
 extraArgs:
   balance-similar-node-groups: true
   skip-nodes-with-system-pods: false

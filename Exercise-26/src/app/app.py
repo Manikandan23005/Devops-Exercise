@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# Dummy Python application file
 import os
 import json
 
 print("Starting Dummy Application...")
 
-# Read config
 current_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(current_dir, '../config/app.json')
 

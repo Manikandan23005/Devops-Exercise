@@ -16,7 +16,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Variables
 variable "aws_region" {
   type        = string
   description = "AWS Region for deployment"
@@ -29,10 +28,8 @@ variable "subnet_ids" {
   default     = ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
 }
 
-# Caller identity
 data "aws_caller_identity" "current" {}
 
-# DynamoDB Table
 resource "aws_dynamodb_table" "customer_data" {
   name         = "customer-data"
   billing_mode = "PAY_PER_REQUEST"
@@ -49,7 +46,6 @@ resource "aws_dynamodb_table" "customer_data" {
   }
 }
 
-# IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {
   name = "production-eks-cluster-role"
 
@@ -72,7 +68,6 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster_role.name
 }
 
-# EKS Cluster
 resource "aws_eks_cluster" "production_eks" {
   name     = "production-eks"
   role_arn = aws_iam_role.eks_cluster_role.arn
@@ -86,19 +81,16 @@ resource "aws_eks_cluster" "production_eks" {
   ]
 }
 
-# OIDC Certificate Data
 data "tls_certificate" "eks" {
   url = aws_eks_cluster.production_eks.identity[0].oidc[0].issuer
 }
 
-# OIDC Provider
 resource "aws_iam_openid_connect_provider" "eks" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.production_eks.identity[0].oidc[0].issuer
 }
 
-# IAM Role for IRSA (Assumed by Kubernetes ServiceAccount)
 resource "aws_iam_role" "customer_app_irsa_role" {
   name = "customer-app-irsa-role"
 
@@ -122,7 +114,6 @@ resource "aws_iam_role" "customer_app_irsa_role" {
   })
 }
 
-# IRSA IAM Policy (DynamoDB access)
 resource "aws_iam_role_policy" "customer_app_irsa_policy" {
   name = "customer-app-irsa-policy"
   role = aws_iam_role.customer_app_irsa_role.id
@@ -142,7 +133,6 @@ resource "aws_iam_role_policy" "customer_app_irsa_policy" {
   })
 }
 
-# Worker Node Group IAM Role
 resource "aws_iam_role" "eks_nodegroup_role" {
   name = "eks-nodegroup-role"
 
@@ -160,7 +150,6 @@ resource "aws_iam_role" "eks_nodegroup_role" {
   })
 }
 
-# EKS Worker Node standard policies
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.eks_nodegroup_role.name
@@ -176,7 +165,6 @@ resource "aws_iam_role_policy_attachment" "eks_registry_policy" {
   role       = aws_iam_role.eks_nodegroup_role.name
 }
 
-# Outputs
 output "eks_cluster_name" {
   value = aws_eks_cluster.production_eks.name
 }

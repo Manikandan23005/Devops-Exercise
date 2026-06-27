@@ -1,8 +1,7 @@
-
 deploymentMode: SingleBinary
 
 loki:
-  auth_enabled: false
+  auth_enabled: true # Enforces X-Scope-OrgID header validation, triggering 403 errors if missing
   
   commonConfig:
     replication_factor: 1
@@ -26,13 +25,4 @@ loki:
 singleBinary:
   replicas: 1
   persistence:
-    enabled: true
-    size: 10Gi
-    storageClass: gp2
-
-monitoring:
-  selfMonitoring:
-    enabled: false
-    grafanaAgent:
-      install: false
-
+    enabled: false # Keep it lightweight for local sandbox testing

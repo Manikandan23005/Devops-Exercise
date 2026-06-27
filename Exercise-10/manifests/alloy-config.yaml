@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: logging-lab
+data:
+  config.alloy: |
+    // Tailing pod logs and pushing to Loki
+    loki.write "local" {
+      endpoint {
+        url = "http://loki.logging-lab.svc.cluster.local:3100/loki/api/v1/push"
+        // Mismatch: tenant_id is missing or empty, leading to HTTP 403 Forbidden!
+      }
+    }
+
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    local.file_match "pod_logs" {
+      path_targets = discovery.kubernetes.pods.targets
+    }
+
+    loki.source.file "pod_logs" {
+      targets    = local.file_match.pod_logs.targets
+      forward_to = [loki.write.local.receiver]
+    }

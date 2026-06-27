@@ -8,7 +8,7 @@ metadata:
     team: payments
     managed-by: argocd
 data:
-  db_host: "postgres.production.svc.cluster.local"  # Internal DB service DNS
+  db_host: "postgres.production.svc.cluster.local"
   db_port: "5432"
   db_name: "payments_prod"
   app_port: "8080"

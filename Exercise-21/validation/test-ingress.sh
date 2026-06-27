@@ -22,7 +22,6 @@ kubectl get ingress apps-ingress -n "$NAMESPACE"
 echo -e "\n5. Checking AWS Load Balancer Controller Logs:"
 kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller --tail=20
 
-# Retrieve ALB URL
 echo -e "\n6. Fetching ALB Ingress Address (may take 2-3 minutes to provision):"
 ALB_HOST=""
 for i in {1..20}; do
@@ -39,10 +38,8 @@ if [ -z "$ALB_HOST" ]; then
   echo "WARNING: ALB Hostname did not provision in time. You can view progress in the AWS ALB Console."
   echo "We will run local port-forward tests to verify service-level routing."
   
-  # Local Port Forward verification
   echo -e "\nRunning local port-forward tests for verification:"
   
-  # Port forward and curl api-service
   kubectl port-forward svc/api-service 8081:80 -n "$NAMESPACE" > /dev/null 2>&1 &
   PF_PID_API=$!
   sleep 2
@@ -50,7 +47,6 @@ if [ -z "$ALB_HOST" ]; then
   curl -s http://127.0.0.1:8081/api/index.html || echo "Failed"
   kill $PF_PID_API || true
   
-  # Port forward and curl admin-service
   kubectl port-forward svc/admin-service 8082:80 -n "$NAMESPACE" > /dev/null 2>&1 &
   PF_PID_ADMIN=$!
   sleep 2
@@ -58,7 +54,6 @@ if [ -z "$ALB_HOST" ]; then
   curl -s http://127.0.0.1:8082/admin/index.html || echo "Failed"
   kill $PF_PID_ADMIN || true
 
-  # Port forward and curl dashboard-service
   kubectl port-forward svc/dashboard-service 8083:80 -n "$NAMESPACE" > /dev/null 2>&1 &
   PF_PID_DASH=$!
   sleep 2

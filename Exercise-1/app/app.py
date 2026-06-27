@@ -4,12 +4,8 @@ import json
 import logging
 import boto3
 import botocore.exceptions
-# pyrefly: ignore [missing-import]
 from flask import Flask, jsonify
-# pyrefly: ignore [missing-import]
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-
-# ─── Logging ──────────────────────────────────────────────────────────────────
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,12 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ─── Flask App ────────────────────────────────────────────────────────────────
-
-# Flask application instance (updated trigger)
 app = Flask(__name__)
-
-# ─── Prometheus Metrics ───────────────────────────────────────────────────────
 
 REQUEST_COUNT = Counter(
     "payment_service_requests_total",
@@ -43,8 +34,6 @@ ERROR_COUNT = Counter(
     ["endpoint", "error_type"],
 )
 
-# ─── AWS Secrets Manager ─────────────────────────────────────────────────────
-
 def get_secret():
     """Fetch payment-service-secret from AWS Secrets Manager via IRSA."""
     region = os.environ.get("AWS_REGION", "ap-south-1")
@@ -59,8 +48,6 @@ def get_secret():
         logger.error("Failed to fetch secret: %s", e)
         return {}
 
-# ─── Routes ──────────────────────────────────────────────────────────────────
-
 @app.route("/")
 def health():
     start = time.time()
@@ -68,12 +55,10 @@ def health():
     REQUEST_LATENCY.labels(method="GET", endpoint="/").observe(time.time() - start)
     return jsonify({"service": "payment-service", "status": "healthy"}), 200
 
-
 @app.route("/metrics")
 def metrics():
     """Expose Prometheus metrics."""
     return generate_latest(), 200, {"Content-Type": CONTENT_TYPE_LATEST}
-
 
 @app.route("/secret-check")
 def secret_check():
@@ -89,9 +74,6 @@ def secret_check():
     if not secret:
         ERROR_COUNT.labels(endpoint="/secret-check", error_type="secrets_manager").inc()
     return jsonify({"status": status, "db_host": secret.get("DB_HOST", "N/A")}), code
-
-
-# ─── Entry Point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

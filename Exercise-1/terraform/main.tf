@@ -16,8 +16,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# ─── Variables ───────────────────────────────────────────────────────────────
-
 variable "aws_region" {
   type        = string
   description = "AWS Region for deployment"
@@ -34,9 +32,9 @@ variable "subnet_ids" {
   type        = list(string)
   description = "Subnet IDs for EKS cluster VPC (minimum 2 subnets in different AZs)"
   default     = [
-    "subnet-0b61943fc05880709",  # ap-south-1c
-    "subnet-08b95f52d9a4209f8",  # ap-south-1a
-    "subnet-0c07d9a09608f2ef3"   # ap-south-1b
+    "subnet-0b61943fc05880709",
+    "subnet-08b95f52d9a4209f8",
+    "subnet-0c07d9a09608f2ef3"
   ]
 }
 
@@ -46,11 +44,7 @@ variable "vpc_id" {
   default     = "vpc-09c126c4b9ddf5d39"
 }
 
-# ─── Caller Identity ─────────────────────────────────────────────────────────
-
 data "aws_caller_identity" "current" {}
-
-# ─── ECR Repository ──────────────────────────────────────────────────────────
 
 resource "aws_ecr_repository" "payment_service" {
   name                 = "payment-service"
@@ -65,8 +59,6 @@ resource "aws_ecr_repository" "payment_service" {
     Project     = "payment-service"
   }
 }
-
-# ─── AWS Secrets Manager ─────────────────────────────────────────────────────
 
 resource "aws_secretsmanager_secret" "payment_service_secret" {
   name        = "payment-service-secret"
@@ -86,8 +78,6 @@ resource "aws_secretsmanager_secret_version" "payment_service_secret_version" {
     DB_PASSWORD = "SuperSecretPassword"
   })
 }
-
-# ─── IAM Role: EKS Cluster ───────────────────────────────────────────────────
 
 resource "aws_iam_role" "eks_cluster_role" {
   name = "production-eks-cluster-role"
@@ -110,8 +100,6 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.eks_cluster_role.name
 }
-
-# ─── IAM Role: Worker Node Group ─────────────────────────────────────────────
 
 resource "aws_iam_role" "eks_nodegroup_role" {
   name = "eks-nodegroup-role"
@@ -145,8 +133,6 @@ resource "aws_iam_role_policy_attachment" "eks_registry_policy" {
   role       = aws_iam_role.eks_nodegroup_role.name
 }
 
-# ─── EKS Cluster ─────────────────────────────────────────────────────────────
-
 resource "aws_eks_cluster" "production_eks" {
   name     = "production-eks"
   role_arn = aws_iam_role.eks_cluster_role.arn
@@ -164,8 +150,6 @@ resource "aws_eks_cluster" "production_eks" {
     aws_iam_role_policy_attachment.eks_cluster_policy
   ]
 }
-
-# ─── Managed Node Group ──────────────────────────────────────────────────────
 
 resource "aws_eks_node_group" "payment_nodes" {
   cluster_name    = aws_eks_cluster.production_eks.name
@@ -187,7 +171,6 @@ resource "aws_eks_node_group" "payment_nodes" {
     aws_iam_role_policy_attachment.eks_registry_policy,
   ]
 }
-# ─── EKS Access Entry for root user ─────────────────────────────────────────
 
 resource "aws_eks_access_entry" "root_admin" {
   cluster_name  = aws_eks_cluster.production_eks.name
@@ -207,7 +190,6 @@ resource "aws_eks_access_policy_association" "root_admin" {
   depends_on = [aws_eks_access_entry.root_admin]
 }
 
-
 data "tls_certificate" "eks" {
   url = aws_eks_cluster.production_eks.identity[0].oidc[0].issuer
 }
@@ -217,8 +199,6 @@ resource "aws_iam_openid_connect_provider" "eks" {
   thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.production_eks.identity[0].oidc[0].issuer
 }
-
-# ─── IRSA Role: payment-service-irsa-role ────────────────────────────────────
 
 resource "aws_iam_role" "payment_service_irsa_role" {
   name = "payment-service-irsa-role"
@@ -261,8 +241,6 @@ resource "aws_iam_role_policy" "payment_service_irsa_policy" {
   })
 }
 
-# ─── IRSA Role: AWS Load Balancer Controller ─────────────────────────────────
-
 resource "aws_iam_role" "alb_controller_irsa_role" {
   name = "aws-load-balancer-controller-irsa-role"
 
@@ -286,7 +264,6 @@ resource "aws_iam_role" "alb_controller_irsa_role" {
   })
 }
 
-# AWS managed policy for ALB controller (must be created separately in real env)
 resource "aws_iam_role_policy" "alb_controller_policy" {
   name = "AWSLoadBalancerControllerIAMPolicy"
   role = aws_iam_role.alb_controller_irsa_role.id
@@ -302,8 +279,6 @@ resource "aws_iam_role_policy" "alb_controller_policy" {
     ]
   })
 }
-
-# ─── GitHub Actions OIDC & IAM Role ──────────────────────────────────────────
 
 data "tls_certificate" "github" {
   url = "https://token.actions.githubusercontent.com"
@@ -364,8 +339,6 @@ resource "aws_iam_role_policy" "github_actions_ecr_policy" {
     ]
   })
 }
-
-# ─── Outputs ─────────────────────────────────────────────────────────────────
 
 output "eks_cluster_name" {
   value = aws_eks_cluster.production_eks.name

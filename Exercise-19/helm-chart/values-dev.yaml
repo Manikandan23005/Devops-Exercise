@@ -1,4 +1,3 @@
-# DEV environment overrides for python-app
 replicaCount: 1
 
 resources:
@@ -17,10 +16,8 @@ secretData:
   API_KEY: "dev-secret-key-xyz"
   DB_PASSWORD: "dev-db-password-123"
 
-# Disable autoscaling in Dev
 autoscaling:
   enabled: false
 
-# Disable PodDisruptionBudget in Dev
 pdb:
   enabled: false

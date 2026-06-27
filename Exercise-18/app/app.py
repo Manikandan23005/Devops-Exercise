@@ -5,7 +5,6 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # Health check endpoint
         if self.path == '/healthz' or self.path == '/health':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -20,15 +19,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         env = os.environ.get('APP_ENV', 'unknown')
         replica = os.environ.get('POD_NAME', 'unknown-pod')
         
-        # Select gradient and details based on environment for high visual quality
         if env.lower() == 'prod' or env.lower() == 'production':
-            gradient = "linear-gradient(135deg, #e53935 0%, #e35d5b 100%)" # Sleek Red
+            gradient = "linear-gradient(135deg, #e53935 0%, #e35d5b 100%)"
             badge_color = "#b71c1c"
         elif env.lower() == 'qa':
-            gradient = "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)" # Vibrant Orange
+            gradient = "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)"
             badge_color = "#e65100"
         else:
-            gradient = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" # Sleek Royal Blue for Dev
+            gradient = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)"
             badge_color = "#0d47a1"
 
         html = f"""

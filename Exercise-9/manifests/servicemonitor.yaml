@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: payment-service-monitor
+  namespace: payment
+  labels:
+    app: payment-service
+    release: kube-prometheus-stack # Default label needed by Prometheus Operator to discover this ServiceMonitor
+spec:
+  selector:
+    matchLabels:
+      app: payment-service
+  endpoints:
+    - port: metrics # Mismatch: targets the hanging "metrics" port instead of the working "prometheus" port
+      path: /metrics
+      interval: 5s
+      scrapeTimeout: 3s
+  namespaceSelector:
+    matchNames:
+      - payment

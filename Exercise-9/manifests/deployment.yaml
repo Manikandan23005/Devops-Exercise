@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: payment
+  labels:
+    app: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: python:3.10-slim
+          command:
+            - python3
+            - -c
+            - |
+              import threading, time, socket, http.server, socketserver
+              
+              # Port 8080: Working metrics endpoint
+              def start_metrics_server():
+                  class MetricsHandler(http.server.SimpleHTTPRequestHandler):
+                      def do_GET(self):
+                          if self.path == '/metrics':
+                              self.send_response(200)
+                              self.send_header('Content-type', 'text/plain')
+                              self.end_headers()
+                              self.wfile.write(b'# HELP payment_requests_total Total number of payments\n# TYPE payment_requests_total counter\npayment_requests_total 42\n')
+                          else:
+                              self.send_response(404)
+                              self.end_headers()
+                  socketserver.TCPServer.allow_reuse_address = True
+                  with socketserver.TCPServer(('', 8080), MetricsHandler) as httpd:
+                      print("Metrics working server listening on 8080...")
+                      httpd.serve_forever()
+              
+              # Port 9090: Hanging endpoint that accepts TCP connections but never replies (simulating timeout)
+              def start_hanging_server():
+                  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                  s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                  s.bind(('', 9090))
+                  s.listen(5)
+                  print("Metrics hanging server listening on 9090...")
+                  while True:
+                      try:
+                          conn, addr = s.accept()
+                          # Deliberately do not read or write, keep the connection open and sleep
+                          # to force a "context deadline exceeded" timeout in Prometheus
+                          time.sleep(60)
+                          conn.close()
+                      except Exception as e:
+                          pass
+              
+              threading.Thread(target=start_metrics_server, daemon=True).start()
+              start_hanging_server()
+          ports:
+            - containerPort: 8080
+              name: app-metrics
+            - containerPort: 9090
+              name: hang-metrics

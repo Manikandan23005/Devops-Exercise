@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-generator
+  namespace: logging-lab
+  labels:
+    app: log-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-generator
+  template:
+    metadata:
+      labels:
+        app: log-generator
+    spec:
+      containers:
+        - name: generator
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                echo "$(date) INFO: Processing transaction on payment-service..."
+                sleep 2
+              done

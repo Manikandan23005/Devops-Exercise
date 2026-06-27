@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: payment
+  labels:
+    app: payment-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: prometheus # Points to the working metrics port
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics # Points to the hanging port (timed out)
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: payment-service

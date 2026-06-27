@@ -23,8 +23,8 @@ spec:
 
   syncPolicy:
     automated:
-      prune: true       # Remove resources deleted from Git
-      selfHeal: true    # Revert manual kubectl changes automatically
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
@@ -36,12 +36,10 @@ spec:
         factor: 2
         maxDuration: 3m
 
-  # Ignore fields mutated by Kubernetes / admission webhooks
   ignoreDifferences:
     - group: apps
       kind: Deployment
       jsonPointers:
         - /spec/template/metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
 
-  # Sync gates: only sync when the app is healthy
   revisionHistoryLimit: 10

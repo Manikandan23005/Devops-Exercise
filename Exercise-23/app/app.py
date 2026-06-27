@@ -1,22 +1,19 @@
 import os
-# pyrefly: ignore [missing-import]
 from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-# Loaded securely via environment variable for Scenario 2
 APP_PASSWORD = os.getenv("APP_PASSWORD", "default_safe_password_321")
 
 @app.route("/")
 def home():
-    # Returns a beautiful dashboard matching high visual quality requirements
     env = os.getenv("APP_ENV", "production")
     
     if env.lower() == "prod" or env.lower() == "production":
-        gradient = "linear-gradient(135deg, #111827 0%, #1f2937 100%)" # Premium dark gray/black
+        gradient = "linear-gradient(135deg, #111827 0%, #1f2937 100%)"
         theme_color = "#3b82f6"
     else:
-        gradient = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)" # Elegant blue
+        gradient = "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)"
         theme_color = "#60a5fa"
 
     html = f"""
@@ -28,7 +25,7 @@ def home():
             body {{
                 font-family: 'Inter', sans-serif;
                 background: {gradient};
-                color: #f3f4f6;
+                color:
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -54,13 +51,13 @@ def home():
             h1 {{
                 font-size: 2.2rem;
                 margin-bottom: 8px;
-                background: linear-gradient(to right, #60a5fa, #a7f3d0);
+                background: linear-gradient(to right,
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
             }}
             .badge {{
                 background-color: {theme_color};
-                color: #0f172a;
+                color:
                 padding: 6px 16px;
                 border-radius: 9999px;
                 font-weight: 700;
@@ -71,14 +68,14 @@ def home():
                 letter-spacing: 0.05em;
             }}
             .desc {{
-                color: #9ca3af;
+                color:
                 font-size: 1.1rem;
                 line-height: 1.6;
             }}
             .footer {{
                 margin-top: 32px;
                 font-size: 0.8rem;
-                color: #6b7280;
+                color:
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
                 padding-top: 20px;
             }}
@@ -98,10 +95,8 @@ def home():
 
 @app.route("/healthz")
 def healthz():
-    # Production-ready health check returns JSON matching unit tests
     return jsonify({"status": "healthy"})
 
 if __name__ == "__main__":
-    # Get port from environment or default to 8080
     port = int(os.getenv("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)  # nosec B104
+    app.run(host="0.0.0.0", port=port)
