@@ -25,4 +25,13 @@ loki:
 singleBinary:
   replicas: 1
   persistence:
-    enabled: false # Keep it lightweight for local sandbox testing
+    enabled: true # Let it provision local persistent storage
+
+# Disable scalable deployment targets for SingleBinary mode
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+

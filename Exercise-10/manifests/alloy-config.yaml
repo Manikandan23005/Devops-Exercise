@@ -9,7 +9,7 @@ data:
     loki.write "local" {
       endpoint {
         url = "http://loki.logging-lab.svc.cluster.local:3100/loki/api/v1/push"
-        // Mismatch: tenant_id is missing or empty, leading to HTTP 403 Forbidden!
+        tenant_id = "logging-lab"
       }
     }
 

@@ -91,7 +91,7 @@ kubectl get svc payment-service -n payment -o yaml
 ### 3. Inspect Pod Logs (Verify port behavior)
 Check python stdout to confirm both servers are listening:
 ```bash
-kubectl logs -n payment -l app=payment-service --tail=20
+![alt text](image-1.png)
 ```
 
 ---
@@ -114,8 +114,7 @@ kubectl patch servicemonitor payment-service-monitor -n payment --type='json' \
 If you want to keep the ServiceMonitor pointing to `port: metrics`, update the service configuration so that `port: metrics` targets containerPort `8080` instead of `9090`:
 
 ```bash
-kubectl patch svc payment-service -n payment --type='json' \
-  -p='[{"op": "replace", "path": "/spec/ports/1/targetPort", "value": 8080}]'
+![alt text](image-2.png)
 ```
 
 ---
