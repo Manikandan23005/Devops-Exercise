@@ -1,0 +1,239 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-service
+  namespace: tracing-lab
+  labels:
+    app: checkout-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-service
+  template:
+    metadata:
+      labels:
+        app: checkout-service
+    spec:
+      containers:
+      - name: checkout-service
+        image: python:3.10-slim
+        ports:
+        - containerPort: 8080
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          import urllib.request
+          import time
+          import sys
+          import json
+
+          class CheckoutHandler(http.server.SimpleHTTPRequestHandler):
+              def do_POST(self):
+                  if self.path == "/checkout":
+                      start_time = time.time()
+                      print("INFO: Received checkout request. Initiating inventory check...", flush=True)
+                      
+                      # Simulate some local processing time (0.5s)
+                      time.sleep(0.5)
+                      
+                      # Call inventory-service
+                      try:
+                          req = urllib.request.Request("http://inventory-service:8080/inventory", method="POST")
+                          with urllib.request.urlopen(req, timeout=10) as response:
+                              res_body = response.read().decode()
+                      except Exception as e:
+                          print(f"ERROR: Failed to query inventory-service: {e}", file=sys.stderr, flush=True)
+                          self.send_response(500)
+                          self.end_headers()
+                          return
+                          
+                      latency = time.time() - start_time
+                      print(f"INFO: Checkout completed successfully in {latency:.2f}s", flush=True)
+                      self.send_response(200)
+                      self.send_header("Content-Type", "application/json")
+                      self.end_headers()
+                      self.wfile.write(json.dumps({
+                          "status": "success",
+                          "total_latency_seconds": round(latency, 2),
+                          "details": json.loads(res_body)
+                      }).encode())
+                  else:
+                      self.send_response(404)
+                      self.end_headers()
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), CheckoutHandler) as httpd:
+              print("Checkout service starting on port 8080...", flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-service
+  namespace: tracing-lab
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: checkout-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: tracing-lab
+  labels:
+    app: inventory-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+      - name: inventory-service
+        image: python:3.10-slim
+        ports:
+        - containerPort: 8080
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          import urllib.request
+          import time
+          import sys
+          import json
+
+          class InventoryHandler(http.server.SimpleHTTPRequestHandler):
+              def do_POST(self):
+                  if self.path == "/inventory":
+                      start_time = time.time()
+                      print("INFO: Checking inventory. Initiating payment authorization...", flush=True)
+                      
+                      # Simulate quick inventory db lookup (0.1s)
+                      time.sleep(0.1)
+                      
+                      # Call payment-service
+                      try:
+                          req = urllib.request.Request("http://payment-service:8080/pay", method="POST")
+                          with urllib.request.urlopen(req, timeout=10) as response:
+                              res_body = response.read().decode()
+                      except Exception as e:
+                          print(f"ERROR: Failed to query payment-service: {e}", file=sys.stderr, flush=True)
+                          self.send_response(500)
+                          self.end_headers()
+                          return
+                          
+                      latency = time.time() - start_time
+                      print(f"INFO: Inventory check and payment completed in {latency:.2f}s", flush=True)
+                      self.send_response(200)
+                      self.send_header("Content-Type", "application/json")
+                      self.end_headers()
+                      self.wfile.write(json.dumps({
+                          "inventory_status": "in_stock",
+                          "payment_details": json.loads(res_body)
+                      }).encode())
+                  else:
+                      self.send_response(404)
+                      self.end_headers()
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), InventoryHandler) as httpd:
+              print("Inventory service starting on port 8080...", flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: tracing-lab
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: inventory-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: tracing-lab
+  labels:
+    app: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: python:3.10-slim
+        ports:
+        - containerPort: 8080
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          import time
+          import sys
+          import json
+
+          class PaymentHandler(http.server.SimpleHTTPRequestHandler):
+              def do_POST(self):
+                  if self.path == "/pay":
+                      start_time = time.time()
+                      print("INFO: Initiating payment authorization request...", flush=True)
+                      
+                      # Introduce artificial delay of 4.2 seconds simulating a slow database lock or slow external gateway response
+                      print("DEBUG: Slow SQL query: SELECT * FROM transaction_locks WHERE account_id = 14892 (simulating lock wait)...", file=sys.stderr, flush=True)
+                      time.sleep(4.2)
+                      
+                      latency = time.time() - start_time
+                      print(f"WARN: External gateway payment verification took {latency:.2f} seconds (api.stripe.com/v1/charges)", file=sys.stderr, flush=True)
+                      
+                      self.send_response(200)
+                      self.send_header("Content-Type", "application/json")
+                      self.end_headers()
+                      self.wfile.write(json.dumps({
+                          "payment_status": "authorized",
+                          "payment_latency": round(latency, 2)
+                      }).encode())
+                  else:
+                      self.send_response(404)
+                      self.end_headers()
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), PaymentHandler) as httpd:
+              print("Payment service starting on port 8080...", flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: tracing-lab
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: payment-service

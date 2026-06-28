@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: payment-crash
+  labels:
+    app: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-service
+        image: python:3.10-slim
+        command:
+        - python3
+        - -c
+        - |
+          import sys
+          import time
+          # Emulate Go log panic format for simulated crash loop investigation
+          print("panic: dial tcp 10.20.0.15:5432 connection refused", file=sys.stderr, flush=True)
+          sys.exit(1)

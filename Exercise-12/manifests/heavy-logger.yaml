@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heavy-logger
+  namespace: disk-pressure-lab
+  labels:
+    app: heavy-logger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: heavy-logger
+  template:
+    metadata:
+      labels:
+        app: heavy-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          echo "Starting heavy logging simulation..."
+          while true; do
+            # Output lines of random hex data continuously to simulate heavy logging activity
+            dd if=/dev/urandom bs=1024 count=100 2>/dev/null | hexdump -C
+            sleep 0.05
+          done
