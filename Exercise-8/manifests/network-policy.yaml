@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress
+  namespace: egress-lab
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  # Allow CoreDNS queries (port 53 UDP/TCP) so name resolution does not fail
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

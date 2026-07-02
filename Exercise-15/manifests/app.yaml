@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-app
+  namespace: prod-outage
+  labels:
+    app: payment-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-app
+  template:
+    metadata:
+      labels:
+        app: payment-app
+    spec:
+      containers:
+      - name: app
+        image: python:3.10-slim
+        ports:
+        - containerPort: 8080
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          import os
+          import sys
+          import json
+          import time
+
+          class HealthHandler(http.server.SimpleHTTPRequestHandler):
+              def do_GET(self):
+                  password = os.environ.get("REDIS_PASSWORD", "")
+                  if password != "new-password":
+                      print("ERROR: Cannot connect to Redis: Authentication failed (redis-service:6379)", file=sys.stderr, flush=True)
+                      self.send_response(503)
+                      self.send_header("Content-Type", "application/json")
+                      self.end_headers()
+                      self.wfile.write(json.dumps({
+                          "error": "Service Unavailable",
+                          "message": "Cannot connect to Redis"
+                      }).encode())
+                  else:
+                      print("INFO: Successfully connected to Redis. Health check passed.", flush=True)
+                      self.send_response(200)
+                      self.send_header("Content-Type", "application/json")
+                      self.end_headers()
+                      self.wfile.write(json.dumps({
+                          "status": "healthy",
+                          "redis": "connected"
+                      }).encode())
+
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), HealthHandler) as httpd:
+              print("Application starting on port 8080...", flush=True)
+              # Also log connection issues initially
+              password = os.environ.get("REDIS_PASSWORD", "")
+              if password != "new-password":
+                  print("ERROR: Cannot connect to Redis: Authentication failed (redis-service:6379)", file=sys.stderr, flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-app-service
+  namespace: prod-outage
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: payment-app

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: scale-failure-lab
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      containers:
+      - name: autoscaler
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          echo "I0702 11:00:00.000000 1 main.go:200] Cluster Autoscaler starting..."
+          echo "I0702 11:00:01.000000 1 static_autoscaler.go:135] Starting check cycle"
+          echo "I0702 11:00:02.000000 1 static_autoscaler.go:189] Detected 10 pending pods needing CPU resources."
+          while true; do
+            echo "W0702 11:00:03.000000 1 static_autoscaler.go:210] No node group config found matching tags k8s.io/cluster-autoscaler/enabled=true."
+            echo "I0702 11:00:03.000000 1 static_autoscaler.go:230] Skipping scale-up check: zero matching ASGs registered."
+            sleep 10
+          done

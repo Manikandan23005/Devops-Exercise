@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processor
+  namespace: scale-failure-lab
+  labels:
+    app: payment-processor
+spec:
+  replicas: 15
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+    spec:
+      containers:
+      - name: web
+        image: python:3.10-slim
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "128Mi"
+          limits:
+            cpu: "2000m"
+            memory: "256Mi"
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), http.server.SimpleHTTPRequestHandler) as httpd:
+              print("Payment processor starting...", flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-processor-service
+  namespace: scale-failure-lab
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: payment-processor

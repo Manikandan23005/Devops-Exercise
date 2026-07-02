@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-app
+  namespace: alb-failure-lab
+  labels:
+    app: payment-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-app
+  template:
+    metadata:
+      labels:
+        app: payment-app
+    spec:
+      containers:
+      - name: app
+        image: python:3.10-slim
+        ports:
+        - containerPort: 8080
+        command:
+        - python3
+        - -c
+        - |
+          import http.server
+          import socketserver
+          socketserver.TCPServer.allow_reuse_address = True
+          with socketserver.TCPServer(("", 8080), http.server.SimpleHTTPRequestHandler) as httpd:
+              print("Application running...", flush=True)
+              httpd.serve_forever()
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-app-service
+  namespace: alb-failure-lab
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: payment-app
