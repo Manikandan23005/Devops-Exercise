@@ -58,57 +58,72 @@ spec:
           import json
           import time
           import sys
+          import os
 
-          # Create warning event in Kubernetes
           context = ssl.create_default_context()
           context.load_verify_locations('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
 
           with open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r') as f:
               token = f.read().strip()
 
-          event = {
-              "apiVersion": "v1",
-              "kind": "Event",
-              "metadata": {
-                  "generateName": "payment-app-ingress-event-",
-                  "namespace": "alb-failure-lab"
-              },
-              "involvedObject": {
-                  "apiVersion": "networking.k8s.io/v1",
-                  "kind": "Ingress",
-                  "name": "payment-app-ingress",
-                  "namespace": "alb-failure-lab"
-              },
-              "reason": "TargetRegistrationFailed",
-              "message": "Target registration failed: unable to register target IPs with AWS Target Group due to subnet discovery failure",
-              "type": "Warning",
-              "source": {
-                  "component": "aws-load-balancer-controller"
-              },
-              "firstTimestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-              "lastTimestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-              "count": 1
-          }
-
-          url = "https://kubernetes.default.svc/api/v1/namespaces/alb-failure-lab/events"
-          req = urllib.request.Request(url, data=json.dumps(event).encode(), headers={
-              "Authorization": f"Bearer {token}",
-              "Content-Type": "application/json"
-          })
-          
-          # Try to post event, wait a bit in case ingress is creating
-          time.sleep(2)
-          for i in range(5):
+          def post_event(reason, message, event_type):
+              event = {
+                  "apiVersion": "v1",
+                  "kind": "Event",
+                  "metadata": {
+                      "generateName": "payment-app-ingress-event-",
+                      "namespace": "alb-failure-lab"
+                  },
+                  "involvedObject": {
+                      "apiVersion": "networking.k8s.io/v1",
+                      "kind": "Ingress",
+                      "name": "payment-app-ingress",
+                      "namespace": "alb-failure-lab"
+                  },
+                  "reason": reason,
+                  "message": message,
+                  "type": event_type,
+                  "source": {
+                      "component": "aws-load-balancer-controller"
+                  },
+                  "firstTimestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "lastTimestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "count": 1
+              }
+              url = "https://kubernetes.default.svc/api/v1/namespaces/alb-failure-lab/events"
+              req = urllib.request.Request(url, data=json.dumps(event).encode(), headers={
+                  "Authorization": f"Bearer {token}",
+                  "Content-Type": "application/json"
+              })
               try:
                   with urllib.request.urlopen(req, context=context) as response:
-                      print("Created TargetRegistrationFailed warning event on Ingress.", flush=True)
-                      break
+                      print(f"Created {reason} {event_type} event on Ingress.", flush=True)
               except Exception as e:
-                  print(f"Waiting for Ingress resource to be ready: {e}", file=sys.stderr, flush=True)
-                  time.sleep(2)
+                  print(f"Failed to create event: {e}", file=sys.stderr, flush=True)
 
-          # Loop and print controller error logs
+          # Initial warning event in case tags are not set yet
+          time.sleep(2)
+          if not os.path.exists("/etc/config/enabled"):
+              post_event("TargetRegistrationFailed", "Target registration failed: unable to register target IPs with AWS Target Group due to subnet discovery failure", "Warning")
+
+          success_event_sent = False
           while True:
-              print("E0702 11:20:00.000000 1 controller.go:102] Unable to discover subnets for ALB. Ensure public subnets are tagged with kubernetes.io/role/elb=1.", flush=True)
-              print("W0702 11:20:05.000000 1 controller.go:155] Target registration failed for payment-app-ingress: target-type ip requires subnet discovery to configure AWS target groups.", flush=True)
+              if os.path.exists("/etc/config/enabled"):
+                  if not success_event_sent:
+                      post_event("TargetRegistrationSuccessful", "Successfully registered target IPs with AWS Target Group", "Normal")
+                      success_event_sent = True
+                  print("I0702 11:25:00.000000 1 controller.go:190] Successfully discovered subnets: [subnet-abc123ef, subnet-xyz456ab] with tags: kubernetes.io/role/elb=1", flush=True)
+                  print("I0702 11:25:01.000000 1 controller.go:200] Registered target IPs [10.244.1.243, 10.244.1.245] with target group target-group-arn", flush=True)
+              else:
+                  success_event_sent = False
+                  print("E0702 11:20:00.000000 1 controller.go:102] Unable to discover subnets for ALB. Ensure public subnets are tagged with kubernetes.io/role/elb=1.", flush=True)
+                  print("W0702 11:20:05.000000 1 controller.go:155] Target registration failed for payment-app-ingress: target-type ip requires subnet discovery to configure AWS target groups.", flush=True)
               time.sleep(10)
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: subnet-tags
+          optional: true
